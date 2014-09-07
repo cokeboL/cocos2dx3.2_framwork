@@ -1,0 +1,13 @@
+一、美术只出一套资源，cocostudio编辑多套比例导出多套json/bin文件放在不同文件夹：
+    1.SHOW_ALL
+	auto screenSize = glview->getFrameSize();
+	根据 screenSize的宽高比，挑选一套比例最接近的cocostudio的导出文件，
+	screenSize的宽高比例如果和designed size宽高比例不完全一致，会有黑边
+    2.EXACT_FIT
+	auto screenSize = glview->getFrameSize();
+	根据 screenSize的宽高比，挑选一套比例最接近的cocostudio的导出文件，
+	screenSize的宽高比例如果和designed size宽高比例不完全一致，会有一点
+	拉伸，但好处是没有黑边
+
+二、如果美术分高清和标清
+    热更新时根据分辨率判断是下载高清还是标清
