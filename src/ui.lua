@@ -40,6 +40,14 @@ function ui.Widget()
 	return ccui.Widget:create()
 end
 
+function ui.binWidget(file)
+    return ccs.GUIReader:getInstance():widgetFromBinaryFile(file)
+end
+
+function ui.jsonWidget(file)
+    return ccs.GUIReader:getInstance():widgetFromJsonFile(file)
+end
+
 function ui.Button()
     return ccui.Button:create()
 end
@@ -116,7 +124,7 @@ function ui.maskLayer()
         return true
     end
     --]]
-    local layer = cc.Layer:create()
+    local layer = ui.Layer()
     layer:setTouchEnabled(true)
     layer:registerScriptTouchHandler(function (event, x, y)
         return true
@@ -126,7 +134,7 @@ function ui.maskLayer()
 end
 
 function ui.messageBox(message, okCallBack, cancelCallBack)
-    local mask = cc.Layer:create()
+    local mask = ui.Layer()
     local widget = ccs.GUIReader:getInstance():widgetFromJsonFile(res.ccs_messageBox)
     local layer = cc.Layer:create()
     layer:addChild(mask)

@@ -4,10 +4,10 @@ local toolkit = require "toolkit"
 local director = require "director"
 
 
-local template = {}
+local main = {}
 
 -- init module 
-function template:initVars()
+function main:initVars()
 	self.scene = nil
 	self.layer = nil
 	self.widget = nil
@@ -15,21 +15,21 @@ function template:initVars()
 	self.loadFrameCount = 0
 end
 
-function template:getData()
+function main:getData()
 	local msgName = "xxx"
 	local msg = "xxxx"
 	net:sendMessage(msgName, msg, self.setData)
 end
 
-function template.setData(msgName, msg)
+function main.setData(msgName, msg)
 	-- xxx
-	local self = template
+	local self = main
 
 	self:loadScene()
 end
 
-function template.loadResource()
-	local self = template
+function main.loadResource()
+	local self = main
 	self.loadFrameCount = self.loadFrameCount + 1
 
 	if self.loadFrameCount == 2 then
@@ -46,7 +46,7 @@ function template.loadResource()
 	end
 end
 
-function template:onEnter()
+function main:onEnter()
 	self.widget = ui.binWidget(file)
 	--self.widget = ui.jsonWidget(file)
 	self.layer:addChild(self.widget)
@@ -54,7 +54,7 @@ function template:onEnter()
     schedule(self.loadNode, self.loadResource, 0)
 end
 
-function template:loadScene()
+function main:loadScene()
 	self.scene = ui.Scene()
 	
 	self.layer = ui.Layer()
@@ -72,11 +72,11 @@ function template:loadScene()
     director.runScene(self.scene, self.clear)
 end
 
-function template.clear()
-	toolkit.clearModule(template)
+function main.clear()
+	toolkit.clearModule(main)
 end
 
-function template:run()	
+function main:run()	
 	-- push loading UI to the running scene
 	toolkit.disableTouch()
 	
@@ -91,4 +91,4 @@ end
 
 -- ************************************
 
-return template
+return main
