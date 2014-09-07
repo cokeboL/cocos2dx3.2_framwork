@@ -1,0 +1,27 @@
+class TMessage
+{
+	TMessage(const char *name, int len, char *content);
+	//void release();
+	std::string	m_Name;
+	int m_Len;
+	char *m_Content;
+};
+
+class CGameNetManager: public CNetBean
+{
+	static CGameNetManager* getInstance();
+	bool netInit(const char* ip, unsigned short port);
+	const TMessage &getNetMessage();
+	void popMessage();
+	void sendNetMessage(std::string &name, int len, char *content);
+	void registerOnMessageScriptHandler(std::string s);
+	void registerOnCreateScriptHandler(std::string s);
+	void registerOnConnectedScriptHandler(std::string s);
+	void registerOnDisconnectedScriptHandler(std::string s);
+	void registerOnConnectErrorScriptHandler(std::string s);
+	void registerOnConnectTimeoutScriptHandler(std::string s);
+	void setAddress(const char* ip, unsigned short port);
+	bool connect();
+	void close();
+	bool request( string & tag, string & url, const char *postData, LUA_FUNCTION cbFunc );
+}
