@@ -1,3 +1,5 @@
+local director = require "director"
+
 ui = {}
 
 function ui.Node()
@@ -19,6 +21,14 @@ end
 
 function ui.Sprite(image)
 	return cc.Sprite:create(image)
+end
+
+function ui.SpriteBg(image)
+	local sp = cc.Sprite:create(image)
+	local size = sprite:getContentSize()
+	sp:setScaleX(director.width / size.width)
+	sp:setScaleX(director.height / size.height)
+	return sp
 end
 
 -- widgets

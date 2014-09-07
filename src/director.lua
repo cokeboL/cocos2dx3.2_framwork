@@ -4,6 +4,8 @@ director.left = cc.p(-director.winSize.width, 0)
 director.right = cc.p(director.winSize.width, 0)
 director.center = cc.p(director.winSize.width/2, director.winSize.height/2)
 director.winSize = cc.Director:getInstance():getWinSize()
+director.width = director.winSize.width
+director.height = director.winSize.height
 
 function director.runScene(scene, releaseCallback, notFade)
 	--local scene = util.Scene()
