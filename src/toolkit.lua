@@ -43,4 +43,9 @@ function toolkit.bind(sprite, attr, super)
     return sprite
 end
 
+function toolkit.reloadLua(file)
+    package.loaded[file]  = nil
+    return require(file)
+end
+
 return toolkit
