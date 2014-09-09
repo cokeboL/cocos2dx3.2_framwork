@@ -178,7 +178,7 @@ void NetMgr::httpResponse(HttpClient *sender, HttpResponse *response)
 	sender->destroyInstance();
 }
 
-void NetMgr::visit() 
+void NetMgr::visit(Renderer *renderer, const Mat4& parentTransform, uint32_t parentFlags)
 { 
 	if (this->m_nConnectStatus == EConnecting) {
 		int nRet = this->m_Sock.IsConnected();	

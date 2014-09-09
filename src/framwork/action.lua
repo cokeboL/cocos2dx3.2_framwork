@@ -37,3 +37,5 @@ function action.bubble(target, duration)
 	target:runAction(seqMoves)
 	target:runAction(seqScales)
 end
+
+return action

@@ -16,3 +16,4 @@ function gScheduler:delete(name)
 	end
 end
 
+return gScheduler

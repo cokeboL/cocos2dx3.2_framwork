@@ -3,6 +3,9 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #endif
+#include "Net/NetMgr.h"
+#include "Net/NetMgrTolua.h"
+#include "LuaPB.h"
 
 USING_NS_CC;
 USING_NS_CC_EXT;
@@ -25,11 +28,13 @@ Update* Update::getInstance()
 
 Update::Update():
 assetsManager(NULL),
-pathToSave(""),
+pathToSave("")
+/*
 onErrNoVersionHandler(0),
 onErrNetworkHandler(0),
 onProgressScriptHandler(0),
 onSuccessScriptHandler(0)
+*/
 {
 	//assetsManager = new cocos2d::extension::AssetsManager("", "", "");
 }
@@ -75,6 +80,18 @@ bool Update::init()
 	program->initWithFilenames("example_Monjori.vsh", "Gray.fsh");
 	m_bg->setShaderProgram(program);
 	*/
+}
+
+void Update::run()
+{
+	auto scene = Scene::create();
+	auto updateLayer = Update::create();
+	scene->addChild(updateLayer);
+	updateLayer->setInfo("127.0.0.1:3001/package.zip", "127.0.0.1:3001/version");
+
+	Director::getInstance()->runWithScene(scene);
+
+	updateLayer->startUpdate();
 }
 
 bool Update::setInfo(std::string url_pack, std::string url_version)
@@ -149,14 +166,14 @@ void Update::createDownloadedDir()
 #endif
 }
 
+
 void Update::startGame()
 {
-	//return;
+	Director::getInstance()->setNotificationNode(NetMgr::getInstance());
 	auto engine = LuaEngine::getInstance();
-	//ScriptEngineManager::getInstance()->setScriptEngine(engine);
-
-	//registerLuas(engine->getLuaStack()->getLuaState());
-	
+	auto state = engine->getLuaStack()->getLuaState();
+	luaopen_NetMgr(state);
+	luaopen_luapb(state);
 	engine->executeScriptFile("main.lua");
 }
 
@@ -165,12 +182,6 @@ void Update::onError(AssetsManager::ErrorCode errorCode)
     if (errorCode == AssetsManager::ErrorCode::NO_NEW_VERSION)
     {
 		startGame();
-        //pProgressLabel->setString("no new version");
-		if(onErrNoVersionHandler)
-		{
-			//LuaEngine::getInstance()->getLuaStack()->executeFunctionByHandler(onErrNoVersionHandler, 0);
-			startGame();
-		}
     }
 	else
 	{

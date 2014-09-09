@@ -170,3 +170,6 @@ function net.testHttpRequest()
 	net.httpRequest("http://192.168.2.210/serverlist.txt", httpRequestCallback)
 end
 --]]
+
+
+return net

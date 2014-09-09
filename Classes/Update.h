@@ -25,6 +25,8 @@ public:
 
 	bool init();
 
+	static void run();
+
 	void startUpdate();
 	void resetVersion();
 

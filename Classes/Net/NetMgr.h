@@ -2,13 +2,13 @@
 #define __NETMANAGER_H__
 
 #include "NetBase/net.h"
-#include "CCNode.h"
+#include "2d/CCNode.h"
 #include "cocos2d.h"
 #include "extensions/cocos-ext.h"
 #include "network/HttpClient.h"
 #include <string>
-#include <curl/curl.h>
-#include <curl/easy.h>
+//#include <curl/curl.h>
+//#include <curl/easy.h>
 #include <thread>
 USING_NS_CC;
 USING_NS_CC_EXT;
@@ -47,7 +47,8 @@ public:
 	bool httpRequest(std::string & url, int cbFunc);
 
 public:
-	virtual void visit();
+	//virtual void visit();
+	virtual void visit(Renderer *renderer, const Mat4& parentTransform, uint32_t parentFlags);
 
 protected:
 	virtual void onCreate();

@@ -23,3 +23,5 @@ res = {
 	-- image
 	ima_mainBg          = "mainBg.png",	
 }
+
+return res
