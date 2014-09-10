@@ -85,12 +85,13 @@ bool AppDelegate::applicationDidFinishLaunching()
 	//director->setContentScaleFactor(resourceSize.height/designSize.height);
 	glview->setDesignResolutionSize(designSize.width, designSize.height, ResolutionPolicy::EXACT_FIT);
 	//glview->setDesignResolutionSize(designSize.width, designSize.height, ResolutionPolicy::SHOW_ALL);
-
-    auto engine = LuaEngine::getInstance();
-    ScriptEngineManager::getInstance()->setScriptEngine(engine);
-	luaopen_luapb(engine->getLuaStack()->getLuaState());
 	
     /*
+	int a = 0;
+	auto engine = LuaEngine::getInstance();
+    ScriptEngineManager::getInstance()->setScriptEngine(engine);
+	auto state = engine->getLuaStack()->getLuaState();
+	luaopen_luapb(state);
 	if (engine->executeScriptFile("src/main.lua")) {
         return false;
     }

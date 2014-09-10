@@ -27,11 +27,28 @@ ProtoImporter &ProtoImporter::instance()
 ProtoImporter::ProtoImporter():
 		importer(&sourceTree, &errorCollector)
 {
-	auto path = cocos2d::FileUtils::getInstance()->fullPathForFilename("src/main.lua");
-	auto pos = path.find("src/main.lua");
-	path.erase(pos);
-	path += "res/proto";
-	sourceTree.MapPath("", path.c_str());
+	auto fileUtils = cocos2d::FileUtils::getInstance();
+
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
+	{
+		auto path = fileUtils->fullPathForFilename("src/main.lua");
+		auto pos = path.find("src/main.lua");
+		path.erase(pos);
+		path += "res/proto";
+		sourceTree.MapPath("", path);
+	}
+#else
+	{
+		auto writePath = fileUtils->getWritablePath();
+		if(writePath.at(writePath.length()-1) == '\\' || writePath.at(writePath.length()-1) == '/')
+		{
+			writePath.erase(writePath.length()-1);
+		}
+ 
+		sourceTree.MapPath("", writePath + "/res/proto");
+	}
+#endif
+
 	//printf("[ProtoImporter] protopath:%s\n", protopath);
 }
 

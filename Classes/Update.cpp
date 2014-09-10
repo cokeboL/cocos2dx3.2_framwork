@@ -6,6 +6,7 @@
 #include "Net/NetMgr.h"
 #include "Net/NetMgrTolua.h"
 #include "LuaPB.h"
+#include "CCLuaEngine.h"
 
 USING_NS_CC;
 USING_NS_CC_EXT;
@@ -170,7 +171,10 @@ void Update::createDownloadedDir()
 void Update::startGame()
 {
 	Director::getInstance()->setNotificationNode(NetMgr::getInstance());
+
 	auto engine = LuaEngine::getInstance();
+    ScriptEngineManager::getInstance()->setScriptEngine(engine);
+	
 	auto state = engine->getLuaStack()->getLuaState();
 	luaopen_NetMgr(state);
 	luaopen_luapb(state);
