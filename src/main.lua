@@ -1,7 +1,3 @@
-require "Cocos2d"
-require "Cocos2dConstants"
-require "commen"
-
 -- cclog
 cclog = function(...)
     print(string.format(...))
@@ -21,7 +17,9 @@ local function main()
     collectgarbage("setpause", 100)
     collectgarbage("setstepmul", 5000)
 
-	require("testScene"):run()
+    require("commen"):init(function()
+        import("testScene"):run()
+    end)
 end
 
 

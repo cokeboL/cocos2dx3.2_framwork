@@ -204,6 +204,44 @@ function ui.messageBox(message, okCallBack, cancelCallBack)
     return layer
 end
 
+function ui.layerMgr()
+    local lmgr = { currLayer = nil }
+    local mgrLayer = ui.Layer()
+    tolua.setpeer(mgrLayer, lmgr)
+
+    function lmgr:addLayer(layer, z)
+        if not self[layer] then
+            self[layer] = layer
+            if not self.currLayer then
+                layer:setPosition(cc.p(0,0))
+                self.currLayer = layer
+            else
+                layer:setPosition(director.right)
+            end
+            self:addChild(layer, z)
+        end
+    end
+    function lmgr:removeLayer(layer)
+        if self[layer] then
+            if self.currLayer == layer then
+                self.currLayer = nil
+            end
+            self[layer]:removeFromParent()
+            self[layer] = nil
+        end
+    end
+    function lmgr:set(layer)
+        if self[layer] then
+            if self.currLayer then
+                self.currLayer:setPosition(director.right)
+            end
+            layer:setPosition(cc.p(0,0))
+            self.currLayer = layer
+        end
+    end
+
+    return mgrLayer
+end
 --[[
 function ui.pushWindow(mbox)
     director.getRunningScene():addChild(mbox, 1000)

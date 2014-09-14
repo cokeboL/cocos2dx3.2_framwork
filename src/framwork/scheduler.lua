@@ -1,4 +1,4 @@
-local gScheduler = {}
+gScheduler = {}
 
 gScheduler.maps = {}
 
