@@ -2,8 +2,9 @@
 #include "CCLuaEngine.h"
 #include "SimpleAudioEngine.h"
 #include "cocos2d.h"
+#include "Net/NetMgr.h"
+#include "Net/NetMgrTolua.h"
 #include "LuaPB.h"
-#include "Update.h"
 
 using namespace CocosDenshion;
 
@@ -58,6 +59,7 @@ bool AppDelegate::applicationDidFinishLaunching()
 
     director->setDisplayStats(true);
     director->setAnimationInterval(1.0 / 60);
+	director->setNotificationNode(NetMgr::getInstance());
 
     auto screenSize = glview->getFrameSize();
 
@@ -83,21 +85,22 @@ bool AppDelegate::applicationDidFinishLaunching()
 	fileUtils->setSearchPaths(searchPaths);
 
 	//director->setContentScaleFactor(resourceSize.height/designSize.height);
-	glview->setDesignResolutionSize(designSize.width, designSize.height, ResolutionPolicy::EXACT_FIT);
+	
+	glview->setDesignResolutionSize(960, 640, ResolutionPolicy::EXACT_FIT);
+	//glview->setDesignResolutionSize(designSize.width, designSize.height, ResolutionPolicy::EXACT_FIT);
 	//glview->setDesignResolutionSize(designSize.width, designSize.height, ResolutionPolicy::SHOW_ALL);
 	
-    /*
-	int a = 0;
+    
 	auto engine = LuaEngine::getInstance();
     ScriptEngineManager::getInstance()->setScriptEngine(engine);
 	auto state = engine->getLuaStack()->getLuaState();
+	luaopen_NetMgr(state);
 	luaopen_luapb(state);
 	if (engine->executeScriptFile("src/main.lua")) {
         return false;
     }
-	*/
 
-	Update::run();
+	//Update::run();
 
     return true;
 }
