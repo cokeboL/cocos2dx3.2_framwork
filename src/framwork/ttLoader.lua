@@ -11,7 +11,7 @@ ttLoader.images = {}
 ttLoader.plists = {}
 
 function ttLoader.ok()
-	return loadingNum == 0
+	return ttLoader.loadingNum == 0
 end
 
 function ttLoader:loadImages(files)	
@@ -25,12 +25,12 @@ function ttLoader:loadImages(files)
 	
 	for _, file in pairs(files) do
 		self.images[#self.images+1] = file
-		loadingNum = loadingNum + 1
+		self.loadingNum = self.loadingNum + 1
 	end
 		
 	local file
 	local function load_()
-		loadingNum = loadingNum - 1
+		self.loadingNum = self.loadingNum - 1
 		if #self.images > 0 then
 			file = self.images[1]
 			table.remove(self.images, 1)
@@ -56,16 +56,7 @@ function ttLoader:loadImages(files)
 	load_()
 end
 
-function ttLoader:loadPlists(files, callback)
-	--[[
-	if callCount % 2 == 1 then
-		files = loadList1
-	else
-		files = loadList2
-	end
-	callCount = callCount + 1
-	--]]
-	
+function ttLoader:loadPlists(files, callback)	
 	if type(files) == 'string' then
 		files = { [1] = files }
 	end
@@ -76,12 +67,12 @@ function ttLoader:loadPlists(files, callback)
 	
 	for _, file in pairs(files) do
 		self.plists[#self.plists+1] = file
-		loadingNum = loadingNum + 1
+		self.loadingNum = self.loadingNum + 1
 	end
 		
 	local file
 	local function load_()
-		loadingNum = loadingNum - 1
+		self.loadingNum = self.loadingNum - 1
 		if #self.plists > 0 then
 			file = self.plists[1]
 			table.remove(self.plists, 1)
