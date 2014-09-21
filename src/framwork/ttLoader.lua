@@ -5,11 +5,14 @@ local textureCache = cc.TextureCache:getInstance()
 local ttLoader = 
 {
 	loadingNum = 0,
-	ok = true,
 }
 
 ttLoader.images = {}
 ttLoader.plists = {}
+
+function ttLoader.ok()
+	return loadingNum == 0
+end
 
 function ttLoader:loadImages(files)	
 	if type(files) == 'string' then
@@ -22,13 +25,12 @@ function ttLoader:loadImages(files)
 	
 	for _, file in pairs(files) do
 		self.images[#self.images+1] = file
+		loadingNum = loadingNum + 1
 	end
-	
-	self.ok = false
-	
+		
 	local file
 	local function load_()
-		
+		loadingNum = loadingNum - 1
 		if #self.images > 0 then
 			file = self.images[1]
 			table.remove(self.images, 1)
@@ -46,7 +48,6 @@ function ttLoader:loadImages(files)
 				load_()
 			end
 		else
-			self.ok = true
 			if callback then
 				callback()
 			end
@@ -75,12 +76,12 @@ function ttLoader:loadPlists(files, callback)
 	
 	for _, file in pairs(files) do
 		self.plists[#self.plists+1] = file
+		loadingNum = loadingNum + 1
 	end
-	
-	self.ok = false
-	
+		
 	local file
 	local function load_()
+		loadingNum = loadingNum - 1
 		if #self.plists > 0 then
 			file = self.plists[1]
 			table.remove(self.plists, 1)
@@ -100,7 +101,6 @@ function ttLoader:loadPlists(files, callback)
 				load_()
 			end
 		else
-			self.ok = true
 			if callback then
 				callback()
 			end
