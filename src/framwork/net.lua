@@ -1,66 +1,70 @@
 local ui = require "ui"
 local constant = require "constant"
 local director = require "director"
+local toolkit = require "toolkit"
 
 net = {}
 
-net.gate = { addr = "192.168.2.134", port = 10101 }
+net.gate = { addr = "115.29.111.174", port = 8080 }
 
 function net:clearListeners()
 	self.listeners = {};
 end
-function net:addListener(msgName, callback)
-	if(type(msgName) == "string" and type(callback) == "function")then
-		self.listeners[msgName] = callback;
-	end
+function net:addListener(cmd, action, callback)
+	self.listeners[cmd] = self.listeners[cmd] or {}
+	self.listeners[cmd][action] = callback
 end
-function net:removeListener(msgName)
-	self.listeners[msgName] = nil;
+function net:removeListener(cmd, action)
+	if self.listeners[cmd] and self.listeners[cmd][action] then
+		self.listeners[cmd][action] = nil
+	end
 end
 
 function net:loadingAnimation()
 	return ui.Node()
 end
 
+--[[
 function net:addMask()
+	
 	if(not self.mask)then
-		self.mask = ui.maskLayer();
+		self.mask = ui.maskLayer()
 		self.mask:addChild(self.loadingAnimation())
-		director.getRunningScene():addChild(self.mask, constant.zorderNet, constant.zorderNet);
+		director.getRunningScene():addChild(self.mask, constant.zorderNet, constant.zorderNet)
 	end
-end
-function net:removeMask()
-	if(self.mask)then
-		self.mask:removeFromParent();
-		self.mask = nil;
-	end
+	
 end
 
-function net.onMessage()
+function net:removeMask()
+	if(self.mask)then
+		self.mask:removeFromParent()
+		self.mask = nil
+	end
+end
+--]]
+
+function net.onMessage(error, cmd, action, flags, option, time, message)
 	local self = net
 	
-	local m = self.instance:getMessage()
-	
-	local msgName = m.name
-	local msg = m.content
-	
-	if(self.callBack[msgName]) then
-		self.callBack[msgName](msgName, msg)
-		self.callBack[msgName] = nil;
-		self.removeMask()
-	elseif(self.listeners[msgName]) then
-		self.listeners[msgName](msgName, msg)
+	if(self.callBack[cmd] and self.callBack[cmd][action]) then
+		self.callBack[cmd][action](error, cmd, action, flags, option, time, message)
+		self.callBack[cmd][action] = nil
+		--self:removeMask()
+		toolkit.enableTouch()
+	elseif(self.listeners[cmd] and self.listeners[cmd][action]) then
+		self.listeners[cmd][action](error, cmd, action, flags, option, time, message)
+		self.listeners[cmd][action] = nil
 	end
 end
 	
 function net.onConnected()
 	local self = net
-	
 	if self.connCB then
 		self.connCB()
 		self.connCB = nil
 	end
-	self.removeMask()
+	--self:removeMask()
+	toolkit.enableTouch()
 end
 	
 function net.onDisConnected()
@@ -68,12 +72,11 @@ function net.onDisConnected()
 end
 	
 function net.onConnectError()
-	cclog("onConnectError");
+	cclog("onConnectError")
 end
 	
 function net.onConnectTimeout()
-	cclog("onConnectTimeout");
-	mainScene.runScene();
+	cclog("onConnectTimeout")
 end
 	
 function net:init()
@@ -94,26 +97,34 @@ function net:init()
 	)
 end
 
-function net:httpRequest(url, callback)
-	self.instance():httpRequest(url, callback);
+function net:httpGet(url, callback)
+	self.instance:httpRequest(url, callback);
+end
+
+function net:httpPost(url, data, callback)
+	self.instance:httpPost(url, data, callback);
 end
 
 function net:connect(ip, port, callback)
 	self.connCB = callback
-	self.instance:close();
-	self.instance:setAddress(ip, port);
-	self.instance:connect()
-	self.addMask()
+	self.instance:close()
+	self.instance:connect(ip, port)
+	--self:addMask()
+	toolkit.disableTouch()
 end
 
-function net:sendMessage(msgName, msg, callback)
-	if(type(msgName) == "string" and type(msg) == "string") then
-		self.addMask()
-		if(msgName and callback)then
-			self.callBack[msgName] = callback;
-		end
-		self.instance:sendMessage(msgName, string.len(msg), msg);
-	end
+function net:sendMessage(len, cmd, action, pbMsg, callback)
+	self.callBack[cmd] = self.callBack[cmd] or {}
+	self.callBack[cmd][action] = callback
+	--self:addMask()
+	toolkit.disableTouch(scene)
+	self.instance:sendMessage(len, cmd, action, pbMsg)
+end
+
+function net:getTimestamp(callback)
+	self:sendMessage(0, 1, 8, "", function(error, cmd, action, flags, option, timetamp, message)
+	    callback(timetamp)
+	end)
 end
 
 return net

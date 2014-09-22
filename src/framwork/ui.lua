@@ -23,12 +23,18 @@ function ui.Sprite(image)
 	return cc.Sprite:create(image)
 end
 
-function ui.SpriteBg(image)
-	local sp = cc.Sprite:create(image)
-	local size = sprite:getContentSize()
+function ui.SpriteBg(file)
+	local sp = cc.Sprite:create("bg/" .. file)
+	local size = sp:getContentSize()
 	sp:setScaleX(director.width / size.width)
 	sp:setScaleX(director.height / size.height)
+    sp:setAnchorPoint(cc.p(0,0))
+    sp:setPosition(cc.p(0,0))
 	return sp
+end
+
+function ui.ProgressTimer(sprite)
+    return cc.ProgressTimer:create(sprite)
 end
 
 -- widgets
@@ -70,19 +76,28 @@ function ui.Slider()
 	return ccui.Slider:create()
 end
 
-function ui.Text()
-    return ccui.Text:create()
-    --return ccui.Text:create(true)
+function ui.Text(text)
+    local t = ccui.Text:create()
+    if text then
+        t:setString(text)
+    end
+    return t
 end
 
 function ui.Text2()
-    return ccui.Text:create()
-    --return ccui.Text:create(true)
+    local t = ccui.Text:create()
+    if text then
+        t:setString(text)
+    end
+    return t
 end
 
 function ui.Text3()
-    return ccui.Text:create()
-    --return ccui.Text:create(true)
+    local t = ccui.Text:create()
+    if text then
+        t:setString(text)
+    end
+    return t
 end
 
 function ui.TextAtlas()
@@ -206,41 +221,42 @@ end
 
 function ui.layerMgr()
     local lmgr = { currLayer = nil }
-    local mgrLayer = ui.Layer()
-    tolua.setpeer(mgrLayer, lmgr)
-
-    function lmgr:addLayer(layer, z)
-        if not self[layer] then
-            self[layer] = layer
-            if not self.currLayer then
-                layer:setPosition(cc.p(0,0))
-                self.currLayer = layer
-            else
-                layer:setPosition(director.right)
-            end
-            self:addChild(layer, z)
-        end
+    
+    function lmgr:add(layer)
+        self[layer] = layer
     end
-    function lmgr:removeLayer(layer)
-        if self[layer] then
-            if self.currLayer == layer then
-                self.currLayer = nil
-            end
-            self[layer]:removeFromParent()
-            self[layer] = nil
+    function lmgr:remove(layer)
+        if self.currLayer == layer then
+            self.currLayer = nil
         end
+        self[layer] = nil
     end
+    -- all layers will be set out of window when layer == nil 
     function lmgr:set(layer)
+        if self.currLayer and self.currLayer ~= layer then
+            self.currLayer:setPosition(director.out)
+        end
         if self[layer] then
-            if self.currLayer then
-                self.currLayer:setPosition(director.right)
-            end
             layer:setPosition(cc.p(0,0))
             self.currLayer = layer
         end
     end
 
-    return mgrLayer
+    return lmgr
+end
+
+function ui.getSpriteFrame(file)
+    return cc.SpriteFrameCache:getInstance():getSpriteFrameByName(file)
+end
+
+function ui.spriteWithFrame(file)
+    local frame = cc.SpriteFrameCache:getInstance():getSpriteFrameByName(file)
+    return cc.Sprite:createWithSpriteFrame(frame)
+end
+
+function ui.scale9SpriteWithFrame(file)
+    local frame = cc.SpriteFrameCache:getInstance():getSpriteFrameByName(file)
+    return cc.Scale9Sprite:createWithSpriteFrame(frame)
 end
 --[[
 function ui.pushWindow(mbox)

@@ -30,8 +30,8 @@ function ttLoader:loadImages(files)
 		
 	local file
 	local function load_()
-		self.loadingNum = self.loadingNum - 1
 		if #self.images > 0 then
+			self.loadingNum = self.loadingNum - 1
 			file = self.images[1]
 			table.remove(self.images, 1)
 			
@@ -68,19 +68,21 @@ function ttLoader:loadPlists(files, callback)
 	for _, file in pairs(files) do
 		self.plists[#self.plists+1] = file
 		self.loadingNum = self.loadingNum + 1
+		--print("------- load texture: ", file)
 	end
 		
 	local file
 	local function load_()
-		self.loadingNum = self.loadingNum - 1
+		
 		if #self.plists > 0 then
+			self.loadingNum = self.loadingNum - 1
 			file = self.plists[1]
 			table.remove(self.plists, 1)
 
 			local pfile = fileUtils:fullPathForFilename(file .. ".plist")
-			local tfile = fileUtils:fullPathForFilename(file .. ".pvr.ccz")
+			local tfile = fileUtils:fullPathForFilename(file .. ".png")
 			if not tfile then
-				tfile = fileUtils:fullPathForFilename(file .. ".png")
+				tfile = fileUtils:fullPathForFilename(file .. ".pvr.ccz")
 			end
 			local function onTxextureLoaded(texture)
 				frameCache:addSpriteFrames(pfile, texture);

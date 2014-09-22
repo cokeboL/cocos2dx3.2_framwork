@@ -3,6 +3,10 @@ local extern   = require "extern"
 local constant = require "constant"
 
 
+local frameCache = cc.SpriteFrameCache:getInstance()
+
+
+
 local toolkit = {}
 
 function toolkit.clearModule(m)
@@ -24,8 +28,8 @@ function toolkit.enableTouch()
     end
 end
 
-function toolkit.disableTouch()
-    local running = cc.Director:getInstance():getRunningScene()
+function toolkit.disableTouch(scene)
+    local running = scene or cc.Director:getInstance():getRunningScene()
     if running then
     	local mask = running:getChildByTag(constant.zorderMax)
     	if not mask then
@@ -34,6 +38,65 @@ function toolkit.disableTouch()
     end
 end
 
+function toolkit.finishLoading()
+    local running = cc.Director:getInstance():getRunningScene()
+    if running then
+        local mask = running:getChildByTag(constant.zorderMax-1)
+        if mask then
+            mask:removeFromParent()
+        end
+    end
+end
+
+function toolkit.startLoading(scene)
+    local running = scene or cc.Director:getInstance():getRunningScene()
+    if running then
+        local mask = running:getChildByTag(constant.zorderMax-1)
+        if not mask then
+            running:addChild(ui.maskLayer(), constant.zorderMax-1, constant.zorderMax-1)
+        end
+    end
+end
+
+function toolkit.finishLoading2()
+    local running = cc.Director:getInstance():getRunningScene()
+    if running then
+        local mask = running:getChildByTag(constant.zorderMax-2)
+        if mask then
+            mask:removeFromParent()
+        end
+    end
+end
+
+function toolkit.startLoading2(scene)
+    local running = scene or cc.Director:getInstance():getRunningScene()
+    if running then
+        local mask = running:getChildByTag(constant.zorderMax-2)
+        if not mask then
+            running:addChild(ui.maskLayer(), constant.zorderMax-2, constant.zorderMax-2)
+        end
+    end
+end
+
+function toolkit.finishLoading3()
+    local running = cc.Director:getInstance():getRunningScene()
+    if running then
+        local mask = running:getChildByTag(constant.zorderMax-3)
+        if mask then
+            mask:removeFromParent()
+        end
+    end
+end
+
+function toolkit.startLoading3(scene)
+    local running = scene or cc.Director:getInstance():getRunningScene()
+    if running then
+        local mask = running:getChildByTag(constant.zorderMax-3)
+        if not mask then
+            running:addChild(ui.maskLayer(), constant.zorderMax-3, constant.zorderMax-3)
+        end
+    end
+end
 function toolkit.bind(sprite, attr, super)
     local t = clone(attr)
     tolua.setpeer(sprite, t)
@@ -43,9 +106,18 @@ function toolkit.bind(sprite, attr, super)
     return sprite
 end
 
-function toolkit.reloadLua(file)
+function toolkit.reloadLuaFile(file)
     package.loaded[file]  = nil
     return require(file)
+end
+
+function toolkit.addSpriteFrames(file)
+    frameCache:addSpriteFramesWithFile(file)
+end
+
+local language = require "cfg/language"
+function language.get(key)
+    return language[key].value
 end
 
 return toolkit

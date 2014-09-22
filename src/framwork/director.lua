@@ -1,11 +1,13 @@
 director = {}
 
 director.winSize = cc.Director:getInstance():getWinSize()
+director.leftTop = cc.p(2, director.winSize.height-2)
 director.left = cc.p(-director.winSize.width, 0)
 director.right = cc.p(director.winSize.width, 0)
 director.center = cc.p(director.winSize.width/2, director.winSize.height/2)
 director.width = director.winSize.width
 director.height = director.winSize.height
+director.out = cc.p(1000000,1000000)
 
 function director.runScene(scene, releaseCallback, notFade)
 	--local scene = util.Scene()

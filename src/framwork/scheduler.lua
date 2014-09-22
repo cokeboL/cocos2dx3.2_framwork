@@ -2,6 +2,8 @@ gScheduler = {}
 
 gScheduler.maps = {}
 
+local scheduler = cc.Director:getInstance():getScheduler()
+
 function gScheduler:new(name, handler, interval, paused)
 	if not self.maps[name] then
 		self.maps[name] = scheduler:scheduleScriptFunc(handler, interval, paused)
