@@ -95,18 +95,23 @@ function unschedule(node)
     node:stopAllActions()
 end
 
-function toolkit.reloadLua(file)
-    package.loaded[file]  = nil
-    return require(file)
-end
-
-local mLoaded_ = {}
+local mLoadedModules_ = {}
 function import(file)
-	mLoaded_[file] = true
+	mLoadedModules_[file] = true
     return require(file) 
 end
-function reset()
-    for file, _ in pairs(mLoaded_) do
+
+function reImport(file)
+    mLoadedModules_[file] = true
+    package.loaded[file]  = nil
+    return require(file) 
+end
+
+function resetLua()
+    for file, _ in pairs(mLoadedModules_) do
         package.loaded[file]  = nil
+		mLoadedModules_[file] = nil
     end
+	require("scheduler"):deleteAllSchedulers()
+   	require "main"
 end
