@@ -18,4 +18,11 @@ function gScheduler:delete(name)
 	end
 end
 
+function gScheduler:deleteAllSchedulers()
+	for k, v in pairs(self.maps) do
+		scheduler:unscheduleScriptEntry(v)
+		self.maps[k] = nil
+	end
+end
+
 return gScheduler

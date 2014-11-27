@@ -1,3 +1,5 @@
+local constant = require "constant"
+
 director = {}
 
 director.winSize = cc.Director:getInstance():getWinSize()
@@ -21,10 +23,11 @@ function director.runScene(scene, releaseCallback, notFade)
 		if notFade then
 
 		else
-			scene = cc.TransitionFade:create(config.transitionTime, scene)
+			--scene = cc.TransitionFade:create(constant.transitionTime, scene)
 		end
-		running:addChild(util.getMaskLayer())
+		--running:addChild(ui.maskLayer())
 		cc.Director:getInstance():replaceScene(scene)
+
 	end
 	
 	if(director.releaseCB and "function" == type(director.releaseCB))then

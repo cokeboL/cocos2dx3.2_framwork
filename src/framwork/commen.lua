@@ -12,7 +12,7 @@ local function loadBaseModules()
 	elseif count == 2 then
 		require "CocoStudio"
 		require "Deprecated"
-	elseif count == 3then
+	elseif count == 3 then
 		require "DeprecatedClass"
 		require "DeprecatedEnum"
 	elseif count == 4 then
