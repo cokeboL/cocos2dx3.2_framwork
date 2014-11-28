@@ -83,7 +83,7 @@ static int pb_repeated_add(lua_State* L)
     }
 	else if(field->type() == google::protobuf::FieldDescriptor::TYPE_ENUM)
 	{
-		int val = luaL_checkinteger(L, 3);
+		int val = static_cast<int>(luaL_checkinteger(L, 2));
 		const EnumValueDescriptor* enum_value = field->enum_type()->FindValueByNumber(val);
 		reflection->AddEnum(message, field, enum_value);
 	}
@@ -302,13 +302,13 @@ static int pb_import(lua_State* L)
 {
 	static std::vector<std::string> _importFiles;
 	
-	CCLOG("-------- pb_import success");
+	//CCLOG("-------- pb_import success");
 
 	const char* filename = luaL_checkstring(L, 1);
-
+	/*
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
 	auto fileUtils = cocos2d::FileUtils::getInstance();
-	auto filePath = fileUtils->fullPathForFilename(std::string(filename));
+	auto filePath = fileUtils->fullPathForFilename(std::string("res/proto/") + std::string(filename));
 	
 	
 	std::vector<std::string>::iterator it;
@@ -316,6 +316,7 @@ static int pb_import(lua_State* L)
 	{
 		if(*it == filename)
 		{
+			CCLOG("----- android proto file found at writable path 111: %s", filePath.c_str());
 			break;
 		}
 	}
@@ -327,6 +328,7 @@ static int pb_import(lua_State* L)
 			writePath.erase(writePath.length()-1);
 		}
 		auto file = writePath + "/" + std::string(filename);
+		//auto file = std::string("/tmp/") + std::string(filename);
 		FILE *fp = fopen(file.c_str(), "w+");
 		if(!fp)
 		{
@@ -335,10 +337,12 @@ static int pb_import(lua_State* L)
 		}
 		auto data = fileUtils->getStringFromFile(filePath);
 		fwrite(data.c_str(), data.length(), 1, fp);
+		CCLOG("----- android proto file write to new file 222 : %s", file.c_str());
 		fclose(fp);
 	}
 #endif
-
+	*/
+	
 	const  google::protobuf::FileDescriptor* filedescriptor = importer.Import(std::string(filename));
 	if (!filedescriptor)
 	{
@@ -354,7 +358,7 @@ static int pb_new(lua_State* L)
 {
 	const char* typeName = luaL_checkstring(L, 1);
 	//Message* message = sProtoImporter.createDynamicMessage(type_name);
-	CCLOG("-------- pb_new");
+	//CCLOG("-------- pb_new");
 	google::protobuf::Message* message = NULL;
 	const google::protobuf::Descriptor* descriptor = importer.pool()->FindMessageTypeByName(std::string(typeName));
 	if (descriptor)
@@ -368,10 +372,10 @@ static int pb_new(lua_State* L)
 
 	if (!message)
 	{
-		fprintf(stderr, "pb_new error, result is typename(%s) not found!\n", typeName);
+		CCLOG("pb_new error, result is typename(%s) not found!\n", typeName);
 		return 0;
 	}
-	CCLOG("-------- pb_new success");
+	//CCLOG("-------- pb_new success");
 	return push_message(L, message, true);
 }
 
@@ -406,7 +410,7 @@ static int pb_get(lua_State* L)
 {
 	lua_pbmsg* luamsg = (lua_pbmsg*)luaL_checkudata(L, 1, PB_MESSAGE_META);
 	const char* field_name = luaL_checkstring(L, 2);
-	CCLOG("-------- pb get");
+	
     Message* message = luamsg->msg;
     if (!message)
     {
@@ -434,7 +438,7 @@ static int pb_get(lua_State* L)
 	}
     else if (field->type() == google::protobuf::FieldDescriptor::TYPE_INT64)
     {
-        lua_pushnumber(L, reflection->GetInt64(*message, field));
+        lua_pushnumber(L, (int32)reflection->GetInt64(*message, field));
     }
 	else if(field->type() == google::protobuf::FieldDescriptor::TYPE_UINT32)
 	{
@@ -442,7 +446,7 @@ static int pb_get(lua_State* L)
 	}
     else if (field->type() == google::protobuf::FieldDescriptor::TYPE_UINT64)
     {
-        lua_pushnumber(L, reflection->GetUInt64(*message, field));
+        lua_pushnumber(L, (uint32)reflection->GetUInt64(*message, field));
     }
 	else if(field->type() == google::protobuf::FieldDescriptor::TYPE_FLOAT)
 	{
@@ -472,7 +476,7 @@ static int pb_get(lua_State* L)
     	return push_message(L, msg, false);
 	}
 
-	CCLOG("------ pb get success");
+	//CCLOG("------ pb get success");
     return 1;
 }
 
@@ -481,7 +485,7 @@ static int pb_set(lua_State* L)
 	lua_pbmsg* luamsg = (lua_pbmsg*)luaL_checkudata(L, 1, PB_MESSAGE_META);
 	const char* field_name = luaL_checkstring(L, 2);
 
-	CCLOG("-------- pb set");
+	//CCLOG("-------- pb set");
     Message* message = luamsg->msg;
     if (!message)
     {
@@ -498,9 +502,11 @@ static int pb_set(lua_State* L)
 
     if(field->type() == google::protobuf::FieldDescriptor::TYPE_STRING)
     {
-    	size_t strlen;
-    	const char *str = luaL_checklstring(L, 3, &strlen);
-        reflection->SetString(message, field, str);
+    	size_t len;
+    	const char *str = luaL_checklstring(L, 3, &len);
+		std::string s;
+		s.insert(0,str,len);
+        reflection->SetString(message, field, s);
     }
 	else if(field->type() == google::protobuf::FieldDescriptor::TYPE_ENUM)
 	{
@@ -513,9 +519,11 @@ static int pb_set(lua_State* L)
 	}
     else if (field->type() == google::protobuf::FieldDescriptor::TYPE_BYTES)
     {
-    	size_t strlen;
-    	const char *str = luaL_checklstring(L, 3, &strlen);
-        reflection->SetString(message, field, str);
+    	size_t len;
+    	const char *str = luaL_checklstring(L, 3, &len);
+		std::string s;
+		s.insert(0,str,len);
+        reflection->SetString(message, field, s);
     }
     else if(field->type() == google::protobuf::FieldDescriptor::TYPE_INT32)
     {
@@ -557,7 +565,7 @@ static int pb_set(lua_State* L)
     	luaL_argerror(L, 2, "pb_set field_name type error");
     }
 
-	CCLOG("-------- pb set success");
+	//CCLOG("-------- pb set success");
 
     return 0;
 }
@@ -571,7 +579,10 @@ static int pb_parseFromString(lua_State* L)
 
     size_t bin_len;
     const char* bin = static_cast<const char*>(	luaL_checklstring(L, 2, &bin_len));
-    message->ParseFromArray(bin, bin_len);
+    if(!message->ParseFromArray(bin, bin_len))
+	{
+		CCLOG("ParseFromArray failed!");
+	}
     return 0;
 }
 
@@ -581,7 +592,11 @@ static int pb_serializeToString(lua_State* L)
     Message* message = luamsg->msg;
 
     std::string msg;
-    message->SerializeToString(&msg);
+    //message->SerializeToString(&msg);
+	if(!message->SerializeToString(&msg))
+	{
+		CCLOG("SerializeToString failed!");
+	}
     lua_pushlstring(L, msg.c_str(), msg.length());
 	return 1;
 }
@@ -630,10 +645,9 @@ int luaopen_luapb(lua_State* L)
 	
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
 	{
-		auto path = fileUtils->fullPathForFilename("res/Login.proto");
-		auto pos = path.find("Login.proto");
+		auto path = fileUtils->fullPathForFilename("res/proto/test.proto");
+		auto pos = path.find("test.proto");
 		path.erase(pos);
-		//path += "res/proto";
 		sourceTree.MapPath("", path);
 		CCLOG("--------------MapPath: %s", path.c_str());
 		CCLOG("--------------MapPath: %s", path.c_str());
@@ -643,6 +657,14 @@ int luaopen_luapb(lua_State* L)
 	{
 		auto writePath = fileUtils->getWritablePath();
 		sourceTree.MapPath("", writePath);
+		/*auto path = fileUtils->fullPathForFilename("res/proto/test.proto");
+		auto pos = path.find("test.proto");
+		path.erase(pos);
+		sourceTree.MapPath("", path);
+		CCLOG("--------------MapPath: %s", path.c_str());
+		CCLOG("--------------MapPath: %s", path.c_str());
+		CCLOG("--------------MapPath: %s", path.c_str());
+		*/
 	}
 #endif
 	

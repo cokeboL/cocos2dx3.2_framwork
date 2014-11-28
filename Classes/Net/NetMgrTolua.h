@@ -3,7 +3,7 @@
 
 
 #if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 501
-	int luaopen_NetMgr (lua_State* tolua_S);
+	int luaopen_Net(lua_State* tolua_S);
 #endif
 
 #endif

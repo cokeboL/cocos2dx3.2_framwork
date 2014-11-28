@@ -65,21 +65,6 @@ void NetMgr::onMessag()
 		lua_pushinteger(L, msg.flags);
 		lua_pushinteger(L, msg.option);
 		lua_pushinteger(L, msg.time);
-		uint32_t len = msg.len;
-		if(msg.flags == 1)
-		{
-			uint32_t len4 = len / 4;
-			for(uint32_t i = 0; i < len4; ++i)
-			{
-				((uint32_t*)msg.message)[i] ^= 0xFFFFFFFF - len + i;
-			}
-
-			uint32_t len1 = len % 4;
-			for(uint32_t i = 0; i < len1; ++i)
-			{
-				msg.message[len4 * 4 + i] ^= 0xFFFFFFFF - len + i;
-			}
-		}
   		lua_pushlstring(L, msg.message, msg.len);
 		LuaEngine::getInstance()->getLuaStack()->executeFunctionByHandler(m_msgCB, 7);
 		m_MessageQueue.pop_front();
@@ -134,25 +119,13 @@ void NetMgr::sendMessage(uint32_t len, uint8_t cmd, uint8_t action, char *msg)
 	*paction++ = action;
 
 	uint8_t *pflags = (uint8_t*)paction;
-	*pflags++ = 1;
+	*pflags++ = 0;
 
 	uint8_t *poptionn = (uint8_t*)pflags;
 	*poptionn++ = 0;
 
 	uint32_t *ptime = (uint32_t*)poptionn;
 	*ptime++ = m_time++;
-
-	uint32_t len4 = len / 4;
-    for(uint32_t i = 0; i < len4; ++i)
-    {
-        ((uint32_t*)msg)[i] ^= 0xFFFFFFFF - len + i;
-    }
-
-    uint32_t len1 = len % 4;
-    for(uint32_t i = 0; i < len1; ++i)
-    {
-        msg[len4 * 4 + i] ^= 0xFFFFFFFF - len + i;
-    }
 
 	memcpy((void*)ptime, msg, len);
 
@@ -331,10 +304,7 @@ void NetMgr::visit(Renderer *renderer, const Mat4& parentTransform, uint32_t par
 		this->close();
 		this->onDisconnected();
 	}
-	if(this->m_nConnectStatus == EConnected)
-	{
-		updateMessage();
-	}
+	updateMessage();
 }
 
 void NetMgr::updateMessage()

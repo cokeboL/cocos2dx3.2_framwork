@@ -43,6 +43,13 @@ public:
         for( auto &o : _q ) f( o );
         _q.clear();
     }
+	size_t size() const {
+		return _q.size();
+	}
+
+	T at(size_t i) const {
+		return _q.at(i);
+	}
 
 private:
     std::mutex      _mutex;

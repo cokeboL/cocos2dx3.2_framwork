@@ -25,14 +25,38 @@ CNetBean::~CNetBean()
 #endif
 }
 
+/*
 void CNetBean::setAddress(const char* ip, unsigned short port)
 {
 	this->m_nnPort = port;
 	this->m_nnAddress = ip;
 }
+*/
 
-bool CNetBean::connect()
+bool CNetBean::connect(const char* ip, unsigned short port)
 {
+	this->m_nnPort = port;
+
+	if(ip[0] >= '0' && ip[0] <= '9')
+	{
+		this->m_nnAddress = ip;
+	}
+	else
+	{
+		struct hostent *host = gethostbyname(ip);
+		
+		if(host)
+		{
+			struct in_addr in;
+			struct sockaddr_in addr;
+
+			memcpy(&addr.sin_addr.s_addr, host->h_addr, 4);
+			in.s_addr = addr.sin_addr.s_addr;
+			this->m_nnAddress = std::string(inet_ntoa(in));
+		}
+	}
+
+	
 	//there is connected or connecting 
 	if(this->m_nConnectStatus == EConnected || this->m_nConnectStatus == EConnecting){
 		return false;
@@ -68,9 +92,13 @@ bool CNetBean::isConnected()
 
 void CNetBean::close()
 {
+	m_netMutex.lock();
 	this->m_Sock.Close();
 	//this->m_nConnectStatus = EDisconnected;
 	this->m_nConnectStatus = ENULL;
+	this->m_vFrameDecodeBuffer.clear();
+	this->m_nRecvPackLength = 0;
+	m_netMutex.unlock();
 }
 
 
@@ -81,11 +109,12 @@ void CNetBean::release()
 }
 
 //void CNetBean::write(CStream &stream)
-void CNetBean::write(char* data, uint16_t length)
+int CNetBean::write(char* data, uint16_t length)
 {
 	//check status
 	if( this->m_nConnectStatus != EConnected ) {
-		return;
+		//this->onDisconnected();
+		return SOCKET_ERROR;
 	}
 	//check io is alive
 	if( m_Sock.IsWritable() ) 
@@ -99,17 +128,19 @@ void CNetBean::write(char* data, uint16_t length)
 				//set the connecting status
 				this->m_nConnectStatus = EDisconnected;
 				//call back to virtual function
-				this->onDisconnected();
-				//release socket
 				this->close();
+				this->onDisconnected();
 				//log
 				CCLOG("## [DEBUG] Write Disconnected if(nLen == SOCKET_ERROR)");
 			}
+			return nLen;
 		}
+		return 0;
 	} 
 	else 
 	{
 		CCLOG("## [DEBUG] Write Disconnected if( m_Sock.IsWritable() )");
+		return SOCKET_ERROR;
 	}
 }
 
@@ -126,7 +157,8 @@ bool CNetBean::parseMessage()
 			for(int i = 0; i < pack_len_bytes; i++) 
 			{
 				//this->m_nRecvPackLength <<= 8;
-				this->m_nRecvPackLength |= (uint16_t((this->m_vFrameDecodeBuffer[i] & 0xff)) << (i*8));
+				this->m_nRecvPackLength |= (uint32_t((this->m_vFrameDecodeBuffer[0] & 0xff)) << (i*8));
+				this->m_vFrameDecodeBuffer.pop_front();
 			}
 		} else {
 			//there is no 4 bytes in buffer
@@ -135,47 +167,50 @@ bool CNetBean::parseMessage()
 	}
 	int readable_size = this->m_vFrameDecodeBuffer.size();// - pack_len_bytes;
 	//if readable
-	if(readable_size >= this->m_nRecvPackLength) 
+	if(readable_size >= (this->m_nRecvPackLength + pack_head_bytes - pack_len_bytes))
 	{
-		//to delelte 4 char of pack length
-		int packLen = 0;
-		for(int i = 0; i < pack_len_bytes; i++)
-		{
-			packLen |= (uint16_t(this->m_vFrameDecodeBuffer[0] & 0xff) << (i*8));
-			this->m_vFrameDecodeBuffer.pop_front();
-		}
+		int len = this->m_nRecvPackLength;
 		
-		int messageNameLen = 0;
-		for(int i = 0; i < pack_message_name_len_bytes; i++) 
+		uint32_t error = 0;
+		for(int i = 0; i < pack_len_bytes; i++) 
 		{
-			messageNameLen |= (uint16_t(this->m_vFrameDecodeBuffer[0] & 0xff) << (i*8));
+			error |= (uint32_t(this->m_vFrameDecodeBuffer[0] & 0xff) << (i*8));
 			this->m_vFrameDecodeBuffer.pop_front();
 		}
 
-		int idx;
-		char *messageName = new char[messageNameLen];
-		for(idx = 0; idx < messageNameLen; idx++) 
+		uint8_t cmd = (uint8_t)this->m_vFrameDecodeBuffer.front();
+		this->m_vFrameDecodeBuffer.pop_front();
+
+		uint8_t action = (uint8_t)this->m_vFrameDecodeBuffer.front();
+		this->m_vFrameDecodeBuffer.pop_front();
+
+		uint8_t flags = (uint8_t)this->m_vFrameDecodeBuffer.front();
+		this->m_vFrameDecodeBuffer.pop_front();
+
+		uint8_t option = (uint8_t)this->m_vFrameDecodeBuffer.front();
+		this->m_vFrameDecodeBuffer.pop_front();
+
+		uint32_t time = 0;
+		for(int i = 0; i < pack_len_bytes; i++) 
 		{
-			messageName[idx] = this->m_vFrameDecodeBuffer.front();
+			time |= (uint32_t(this->m_vFrameDecodeBuffer[0] & 0xff) << (i*8));
 			this->m_vFrameDecodeBuffer.pop_front();
 		}
 
-		int contentLen = packLen - pack_len_bytes - pack_message_name_len_bytes - messageNameLen;
-		char *messageContent = new char[contentLen];
+		char *message = new char[len];
 		//read data from buffer
-		for(idx = 0; idx < contentLen; idx++) 
+		for(int idx = 0; idx < len; idx++) 
 		{
-			messageContent[idx] = this->m_vFrameDecodeBuffer.front();
+			message[idx] = this->m_vFrameDecodeBuffer.front();
 			this->m_vFrameDecodeBuffer.pop_front();
 		}
 		
 		this->m_nRecvPackLength = 0;
 
 
-		this->m_MessageQueue.push_back(TMessage((const char*)messageName, contentLen, messageContent));
+		this->m_MessageQueue.push_back(TMessage(len, error, cmd, action, flags, option, time, message));
 
-		delete messageName;
-		delete messageContent;
+		delete message;
 
 		return true;
 	}

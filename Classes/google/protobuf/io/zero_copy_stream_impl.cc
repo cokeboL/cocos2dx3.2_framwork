@@ -136,10 +136,17 @@ bool FileInputStream::CopyingFileInputStream::Close() {
 
 int FileInputStream::CopyingFileInputStream::Read(void* buffer, int size) {
   GOOGLE_CHECK(!is_closed_);
-
-  int result;
+  
+  int result = 0;
   do {
     result = read(file_, buffer, size);
+#if 1
+	
+	for(int i=0; i<result; i++)
+    {
+        ((char*)buffer)[i] ^= 0x5C;
+    }
+#endif
   } while (result < 0 && errno == EINTR);
 
   if (result < 0) {

@@ -176,7 +176,7 @@ void Update::startGame()
     ScriptEngineManager::getInstance()->setScriptEngine(engine);
 	
 	auto state = engine->getLuaStack()->getLuaState();
-	luaopen_NetMgr(state);
+	luaopen_Net(state);
 	luaopen_luapb(state);
 	engine->executeScriptFile("main.lua");
 }

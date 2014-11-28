@@ -18,7 +18,7 @@ using namespace cocos2d::network;
 class NetMgr: public CNetBean
 {
 public:
-	NetMgr(): CNetBean(), m_connCB(0), m_disconnCB(0), m_timeoutCB(0), m_errCB(0), m_msgCB(0)
+	NetMgr(): CNetBean(), m_connCB(0), m_disconnCB(0), m_timeoutCB(0), m_errCB(0), m_msgCB(0), m_time(0), m_msgThread(0)
 	{
 	}
 	
@@ -36,16 +36,22 @@ public:
 		return pInstance;
 	}
 	    
-	virtual const TMessage &getMessage();
+	//virtual const TMessage &getMessage();
 
-	virtual void popMessage();
+	//virtual void popMessage();
 
-	virtual void sendMessage(std::string &name, int len, char *content);
+	virtual void sendMessage(uint32_t len, uint8_t cmd, uint8_t action, char *pbMsg);
 	
 	void registerCallBacks(int connCB, int disconnCB, int errCB, int timeoutCB, int msgCB);
 
-	bool httpRequest(std::string & url, int cbFunc);
+	bool httpGet(std::string & url, int cbFunc);
 
+	bool httpPost(std::string & url, std::string data, int cbFunc);
+
+	void pushMsg(TMessage msg)
+	{
+		m_MessageQueue.push_back(msg);
+	}
 public:
 	//virtual void visit();
 	virtual void visit(Renderer *renderer, const Mat4& parentTransform, uint32_t parentFlags);
@@ -73,6 +79,9 @@ private:
 	int m_timeoutCB;
 	int m_errCB;
 	int m_msgCB;
+	uint32_t m_time;
+	
+	std::thread *m_msgThread;
 
 	std::map<std::string, int> requestMap;
 };

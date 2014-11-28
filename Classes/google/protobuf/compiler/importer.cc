@@ -50,6 +50,11 @@
 #include <google/protobuf/io/tokenizer.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/stubs/strutil.h>
+#include <unistd.h>
+#include <stdio.h>
+#include "cocos2d.h"
+
+USING_NS_CC;
 
 namespace google {
 namespace protobuf {
@@ -443,11 +448,70 @@ io::ZeroCopyInputStream* DiskSourceTree::OpenDiskFile(
     const string& filename) {
   int file_descriptor;
   do {
-    file_descriptor = open(filename.c_str(), O_RDONLY);
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
+	//file_descriptor = open(filename.c_str(), O_RDONLY);
+	file_descriptor = open(filename.c_str(), O_RDONLY | O_BINARY);
+#else
+	char temp_file[256] = "";
+	auto pos = filename.find_last_of("/");
+	std::string realfilename;
+	if(pos < filename.length())
+	{
+		realfilename = filename.substr(pos+1);
+	}
+	else
+	{
+		realfilename = filename;
+	}
+	auto fileUtils = cocos2d::FileUtils::getInstance();
+	auto filePath = fileUtils->fullPathForFilename(std::string("res/proto/") + realfilename);
+	auto writePath = fileUtils->getWritablePath();
+	while(1){
+		if(writePath.at(writePath.length()-1) == '\\' || writePath.at(writePath.length()-1) == '/')
+		{
+			writePath.erase(writePath.length()-1);
+		}
+		else
+		{
+			break;
+		}
+	}
+	writePath = writePath + "/" + realfilename;
+	CCLOG("--------------  111 writePath: %s\n", writePath.c_str());
+	file_descriptor = open(writePath.c_str(), O_TRUNC | O_RDWR);
+	
+	if(file_descriptor < 0)
+	{
+		file_descriptor = open(writePath.c_str(), O_CREAT | O_RDWR);
+	}
+	
+	if(file_descriptor >= 0)
+	{
+		
+		CCLOG("\n************************* %s\n",realfilename.c_str());
+		std::string data = fileUtils->getStringFromFile(filePath);
+		CCLOG("-------------- 222 data len: %d\n", data.length());
+		//CCLOG("-------------- 333 data str: %d\n", data.c_str());
+		int nwrite = write(file_descriptor, data.c_str(), data.length());
+		if(nwrite <= 0){
+			CCLOG("--------------  err: %s\n", strerror(errno));
+		}
+		CCLOG("-------------- **** nwrite: %d\n",nwrite);
+		char buf[8192] = "";
+		lseek(file_descriptor, 0, SEEK_SET);
+		int nread = read(file_descriptor, buf, sizeof(buf));
+		CCLOG("-------------- 444 buf len: %d\n",nread);
+		//CCLOG("-------------- 555 buf str: %s\n", buf);
+		lseek(file_descriptor, 0, SEEK_SET);
+		unlink(writePath.c_str()); 
+		CCLOG("************************* %s\n",realfilename.c_str());
+	}
+#endif
   } while (file_descriptor < 0 && errno == EINTR);
   if (file_descriptor >= 0) {
     io::FileInputStream* result = new io::FileInputStream(file_descriptor);
     result->SetCloseOnDelete(true);
+	//close(file_descriptor);
     return result;
   } else {
     return NULL;
