@@ -70,8 +70,8 @@ function toolkit.startLoading(scene)
             --]]
             loadingSP = ui.Sprite("loading_2.png")
             loadingSP:setPosition(director.center)
-            loadingSP:setVisible(false)
             loadingSP:runAction(cc.RepeatForever:create(cc.RotateBy:create(1.5, 360)))
+            loadingSP:setVisible(false)
 
             local size = loadingSP:getContentSize()
             local text = ui.Text()
@@ -79,7 +79,7 @@ function toolkit.startLoading(scene)
             text:setAnchorPoint(cc.p(0, 0.5))
             text:setString("连接中...")
             text:setPosition(cc.p(size.width/2 + director.center.x, director.center.y))
-            --text:setVisible(false)
+            text:setVisible(false)
 
             ---[[
             scheduleOnce(mask, function()

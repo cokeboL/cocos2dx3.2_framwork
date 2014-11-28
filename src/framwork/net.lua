@@ -6,7 +6,7 @@ local gscheduler = require "scheduler"
 local pb = require "pb"
 
 local heartBeatInterval = 30
-local msgTimeout = 10
+local msgTimeout = 5
 
 pb.import("GamerMessage.proto")
 
@@ -28,25 +28,24 @@ end
 
 function net.onMessage(err, cmd, action, flags, option, time, message)
 	local self = net
+
+	print("---------- onMessage cmd: ", cmd, " action: ", action, " err: ", err)
 	
-
-	print("---------- onMessage: ", cmd, action, err)
-	self.packResponsed = true
-
-	if message == "syncServerTime" then
+	if message == "syncServerTime" and self.state == "connected" then
 		self:getTimestamp()
+		print("---------- onMessage syncServerTime")
 		return
 	end
 	if err ~= 0 then
 		
 		local pack = self.packQueue[1]
 		print("-------------- err : ", pack.cmd, pack.action)
-		if(self.callBack[pack.cmd] and self.callBack[pack.cmd][pack.action]) then
+		if pack and (self.callBack[pack.cmd] and self.callBack[pack.cmd][pack.action]) then
 			self.callBack[pack.cmd][pack.action](err, pack.cmd, pack.action, flags, option, time, message)
+			table.remove(self.packQueue, 1)
 		else
 			toolkit.pushMsg("err code: " .. err)
 		end
-		table.remove(self.packQueue, 1)
 		toolkit.finishLoading()
 	elseif(self.callBack[cmd] and self.callBack[cmd][action]) then
 		self.callBack[cmd][action](err, cmd, action, flags, option, time, message)
@@ -55,7 +54,7 @@ function net.onMessage(err, cmd, action, flags, option, time, message)
 	elseif(self.listeners[cmd] and self.listeners[cmd][action]) then
 		self.listeners[cmd][action](err, cmd, action, flags, option, time, message)
 	end
-	
+	self.packResponsed = true
 end
 
 local heartbeatCount = 0
@@ -65,15 +64,17 @@ end
 function net.heartBeat()
 	local self = net
 
-	if self.state ~= "connected" then
+	print("***** 111")
+	if self.state ~= "connected" and self.state ~= "connecting" then
 		return 
 	end
-
+	print("***** 222")
 	--cclog("***heartBeat**")
 
 	local timeInterval = os.time() - self.lastSendPackTime
 	if not self.packResponsed and timeInterval >= msgTimeout then
 		cclog("-------------- heartbeat connect time out ")
+		self.onNetErr()
 	elseif timeInterval >= heartBeatInterval then
 		net:getTimestamp(self.heartBeatCB)
 		cclog("-------- heartbeat pack, player id: " .. self.heroId .. "  pack count: " .. heartbeatCount)
@@ -97,7 +98,7 @@ function net.onConnected()
 
 	--self.netErr = false
 	self.state = "connected"
-
+print("============= onConnected")
 	if self.isLogicServer then
 		gScheduler:new("startHeartbeat", function()
 			gScheduler:delete("heartbeat")
@@ -111,13 +112,14 @@ function net.onConnected()
 	if self.connCB then
 		self.connCB()
 	end
+	self.packResponsed = true
 	toolkit.finishLoading()
 end
 
 function net.onDisConnected()
 	local self = net
 	self.state = ""
-	
+
 	self.onNetErr()
 
 	cclog("--------------- onDisConnected xxxx")
@@ -214,7 +216,7 @@ function net:httpPost(url, data, callback)
 end
 
 function net:connect(ip, port, callback, isLogicServer)
-	self.state = ""
+	print("--------- connect: ", ip, port, callback, isLogicServer)
 	self.connCB = callback
 	self.isLogicServer = isLogicServer
 	self.ip = ip
@@ -226,6 +228,9 @@ function net:connect(ip, port, callback, isLogicServer)
 		toolkit.startLoading()
 	end
 	--]]
+	self.packResponsed = false
+	self.state = "connecting"
+	self.lastSendPackTime = os.time()
 end
 
 function net:sendMessage(len, cmd, action, pbMsg, callback, disableTouch)
@@ -291,17 +296,25 @@ function net.reconnect()
 
 		if #self.packQueue > 0 then
 			local pack
-			for i=1, #self.packQueue do
-				pack = self.packQueue[i]
+			local packNeedToSend = clone(self.packQueue)
+			self.packQueue = {}
+			for i=1, #packNeedToSend-1 do
+				pack = packNeedToSend[i]
 				net:sendMessage(string.len(pack.msg), pack.cmd, pack.action, pack.msg, pack.cb)
 			end
-			self.packQueue = {}
+			--self.packQueue = {}
 		end
 	end
 	local function onReconnected()
+		print("----------- onReconnected")
 		local loginReq = pb.new("PB_GamerInit_C2S")
 		loginReq.reconn = self.reconnSession
-		loginReq.session = ""
+		print("--- -1-1-1 self.reconnSession: ", self.reconnSession)
+		if self.reconnSession then
+			loginReq.session = ""
+		else
+			loginReq.session = self.session
+		end
 		loginReq.version = "2.0.0.0"
 		local req = pb.serializeToString(loginReq)
 		net:sendMessage(string.len(req), 1, 2, req, reconnCheck)
@@ -311,22 +324,35 @@ function net.reconnect()
 	else
 		self:connect(self.ip, self.port, self.connCB, self.isLogicServer)
 	end
+
 end
 
 function net.onNetErr(cb)
+	--gScheduler:delete("heartbeat")
+
 	local self = net
 
+	self.state = "error"
+	self.instance:close()
 	toolkit.finishLoading()
 	toolkit.pushMsg("网络出错，请重试!", function()
 		if cb then cb() end
 		--self.netErr = false
 		--self.reconnectCount = 0
 		--cclog("pop messageBox")
+		toolkit.startLoading()
 		if self.isLogicServer or self.isLogicServerOn then
 			self.reconnect()
 		end
 	end)
 	cclog("--- net err, please check your net and retry!")
+end
+
+function net.httpOnNetErr(cb)
+	local self = net
+	self.state = "error"
+	toolkit.finishLoading()
+	toolkit.pushMsg("网络出错，请重试!")
 end
 
 return net
