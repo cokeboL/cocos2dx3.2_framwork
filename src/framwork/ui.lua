@@ -1134,9 +1134,9 @@ function ui.Icon(equipment, eid, iconBg, hasNum, itemNum, scale)
     local str2 = string.sub(eid,0,2)
     if str2 == "36" then
         local str = "10"..string.sub(eid,3,string.len(eid))
-        signSp = cc.Sprite:create("image/head/"..str..".png")
+        signSp = cc.Sprite:create("image/fragmentHead/"..str..".png")
         if signSp then
-            signSp:setScale(scale)
+            signSp:setScale(0.9)
             signSp:setLocalZOrder(4)
             signSp:setPosition(cc.p(46,47))
             bgSp:addChild(signSp)
@@ -1210,10 +1210,16 @@ function ui.itemIcon(info,touchHandler)
     else
       return nil
     end
-    if math.floor(info.eid/10000000) == 30 or math.floor(info.eid/10000000) == 31 or math.floor(info.eid/10000000) == 32 or math.floor(info.eid/10000000) == 33 then
-        info.eid = info.eid%100000000 + 200000000
+    if  math.floor(info.eid/10000000) == 36 then
+
+        itemImage:loadTexture("head/"..(info.eid%10000000 + 100000000)..".png")
+        itemImage:setScale(80/225)
+    else
+        if math.floor(info.eid/10000000) == 30 or math.floor(info.eid/10000000) == 31 or math.floor(info.eid/10000000) == 32 or math.floor(info.eid/10000000) == 33 then
+            info.eid = info.eid%100000000 + 200000000
+        end
+        itemImage:loadTexture("item/"..info.eid..".png")
     end
-    itemImage:loadTexture("item/"..info.eid..".png")
     if info.showNum == true then
         itemNumLabel:setString(""..info.num)
     else
@@ -1281,6 +1287,33 @@ function ui.soldierIcon(info, touchHandler)
         end
     else
         bg:getChildByName("trainImage"):setVisible(false)
+    end
+    local kuangImage = bg:getChildByName("kuangImage")
+    local quality = info.color
+    if quality == 1 then
+      kuangImage:loadTexture("qualityBg/white_1.png")
+      bg:loadTexture("qualityBg/white_2.png")
+    elseif quality == 2 then
+      kuangImage:loadTexture("qualityBg/green_1.png")
+      bg:loadTexture("qualityBg/green_2.png")
+    elseif quality == 3 then
+      kuangImage:loadTexture("qualityBg/blue_1.png")
+      bg:loadTexture("qualityBg/blue_2.png")
+    elseif quality == 4 then
+      kuangImage:loadTexture("qualityBg/purple_1.png")
+      bg:loadTexture("qualityBg/purple_2.png")
+    elseif quality == 5 then
+      kuangImage:loadTexture("qualityBg/orange_1.png")
+      bg:loadTexture("qualityBg/orange_2.png")
+    elseif quality == 6 then
+      kuangImage:loadTexture("qualityBg/red_1.png")
+      bg:loadTexture("qualityBg/red_2.png")
+    elseif quality == 7 then
+      kuangImage:loadTexture("qualityBg/yellow_1.png")
+      bg:loadTexture("qualityBg/yellow_2.png")
+    else
+        kuangImage:setVisible(false)
+        bg:loadTexture()
     end
 
     local size = bg:getContentSize()
@@ -1369,12 +1402,13 @@ function ui.confirmWindow(text, confirmCallBack, cancelCallBack, cancelTex, conf
     local widget = ui.binWidget("Confirm_1.csb")
     layer:addChild(widget)
     local text1 = widget:getChildByName("text")
-    local label = ui.Utf8Text(text, 25,cc.c3b(255, 255, 255), 449)
-    if label then
-        local m,n = text1:getPosition()
-        label:setPosition(cc.p(m, n+35))
-        widget:addChild(label)
-    end
+    text1:setString(text)
+    --local label = ui.Utf8Text(text, 25,cc.c3b(255, 255, 255), 449)
+   -- if label then
+       -- local m,n = text1:getPosition()
+       -- label:setPosition(cc.p(m, n+35))
+      --  widget:addChild(label)
+   -- end
    -- local ttf = cc.LabelTTF:create("", "marker felt", 23)
     --ttf:setPosition(cc.p(text1:getPosition()))
     --ttf:setDimensions(cc.size(text1:getContentSize()))

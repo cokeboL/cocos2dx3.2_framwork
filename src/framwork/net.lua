@@ -10,8 +10,8 @@ local msgTimeout = 5
 
 pb.import("GamerMessage.proto")
 
---net = { gateIp = "192.168.10.20", gatePort = 8080, state = "" }
-net = { gateIp = "auth.tzb.ilongyuan.cn", gatePort = 8080, state = "" }
+net = { gateIp = "192.168.1.100", gatePort = 8080, state = "" }
+
 
 function net:clearListeners()
 	self.listeners = {}
@@ -29,17 +29,17 @@ end
 function net.onMessage(err, cmd, action, flags, option, time, message)
 	local self = net
 
-	print("---------- onMessage cmd: ", cmd, " action: ", action, " err: ", err)
+	--print("---------- onMessage cmd: ", cmd, " action: ", action, " err: ", err)
 	
 	if message == "syncServerTime" and self.state == "connected" then
 		self:getTimestamp()
-		print("---------- onMessage syncServerTime")
+		--print("---------- onMessage syncServerTime")
 		return
 	end
 	if err ~= 0 then
 		
 		local pack = self.packQueue[1]
-		print("-------------- err : ", pack.cmd, pack.action)
+		--print("-------------- onMessage err : ", pack.cmd, pack.action)
 		if pack and (self.callBack[pack.cmd] and self.callBack[pack.cmd][pack.action]) then
 			self.callBack[pack.cmd][pack.action](err, pack.cmd, pack.action, flags, option, time, message)
 			table.remove(self.packQueue, 1)
@@ -64,11 +64,9 @@ end
 function net.heartBeat()
 	local self = net
 
-	print("***** 111")
 	if self.state ~= "connected" and self.state ~= "connecting" then
 		return 
 	end
-	print("***** 222")
 	--cclog("***heartBeat**")
 
 	local timeInterval = os.time() - self.lastSendPackTime
@@ -77,7 +75,7 @@ function net.heartBeat()
 		self.onNetErr()
 	elseif timeInterval >= heartBeatInterval then
 		net:getTimestamp(self.heartBeatCB)
-		cclog("-------- heartbeat pack, player id: " .. self.heroId .. "  pack count: " .. heartbeatCount)
+		--cclog("-------- heartbeat pack, player id: " .. self.heroId .. "  pack count: " .. heartbeatCount)
 		heartbeatCount = heartbeatCount + 1
 	end
 
@@ -239,13 +237,23 @@ function net:sendMessage(len, cmd, action, pbMsg, callback, disableTouch)
 		self.lastAction = action
 	end
 	--]]
-	print("----sendMessage: ", len, cmd, action, pbMsg, callback, disableTouch)
+	--print("----sendMessage: ", len, cmd, action, pbMsg, callback, disableTouch)
 	self.callBack[cmd] = self.callBack[cmd] or {}
 	self.callBack[cmd][action] = callback
 	if disableTouch or disableTouch == nil then
 		toolkit.startLoading(scene)
 	end
 	self.packResponsed = false
+	
+	--[[ fix: double encrypt error when reconnected
+	self.packQueue[#self.packQueue+1] = {cmd=cmd, action=action, msg=pbMsg .. "abc", cb=callback}
+	self.packQueue[#self.packQueue].msg = string.sub(self.packQueue[#self.packQueue].msg, 1, -4)
+	
+	if #self.packQueue > 1 then
+		print("xxxxxxxxxxxx true or false: ", pbMsg == self.packQueue[#self.packQueue-1].msg)
+	end
+	--]]
+
 	self.instance:sendMessage(len, cmd, action, pbMsg)
 	self.lastSendPackTime = os.time()
 
@@ -253,19 +261,20 @@ function net:sendMessage(len, cmd, action, pbMsg, callback, disableTouch)
 end
 
 function net:getTimestamp(callback)
+	
 	pb.import("GamerInit.proto")
 	local gameEchoC2s = pb.new("PB_GamerEcho_C2S")
 	local heroInfo = db.get("heroInfo")
 	gameEchoC2s.id = heroInfo.id
 	self.heroId = heroInfo.id
-	print("---------------getTimestamp id: ", gameEchoC2s.id)
+	
 	self.gameEchoStr = pb.serializeToString(gameEchoC2s)
 
 	self:sendMessage(string.len(self.gameEchoStr), 1, 8, self.gameEchoStr, function(err, cmd, action, flags, option, timestamp, message)
-		print("------- get time stamp, msg len: ", string.len(message), ' err: ', err)
+		print("------- 111 get time stamp, msg len: ", string.len(message), ' err: ', err)
 		local gameEchoS2c = pb.new("PB_GamerEcho_S2C")
 		pb.parseFromString(gameEchoS2c, message)
-		print("------- get time stamp, msg len: ", string.len(message))
+		--print("------- get time stamp, msg len: ", string.len(message))
 		self.timestampIncrement = gameEchoS2c.time - os.time()
 		if callback then
 			--print("---- callback is true 111")
@@ -294,6 +303,7 @@ function net.reconnect()
 		table.remove(self.packQueue, 1)
 		toolkit.finishLoading()
 
+
 		if #self.packQueue > 0 then
 			local pack
 			local packNeedToSend = clone(self.packQueue)
@@ -301,6 +311,7 @@ function net.reconnect()
 			for i=1, #packNeedToSend-1 do
 				pack = packNeedToSend[i]
 				net:sendMessage(string.len(pack.msg), pack.cmd, pack.action, pack.msg, pack.cb)
+				
 			end
 			--self.packQueue = {}
 		end

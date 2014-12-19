@@ -20,6 +20,7 @@ db =
 	otherArmyMsg = nil, --集训营敌方数据 PB_GamerCamp,type: pbstr
 	myArmyMsg = nil, --集训营 我方数据 PB_GamerCamp,type: pbstr
 	blackList = nil, -- 黑名單
+	gameServerInfo = nil, --服务器信息 PB_GamerAuthClientCheck_S2C , type: pbstr
 }
 
 function db.get(key)

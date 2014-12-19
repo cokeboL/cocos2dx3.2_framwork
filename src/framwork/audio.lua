@@ -2,6 +2,20 @@ require "AudioEngine"
 
 audio = AudioEngine
 
+function audio.playMus(file)
+    if file then
+        AudioEngine.preloadMusic(file)
+        AudioEngine.playMusic(file, true)
+    end
+end
+
+function audio.playEff(file)
+    if file then
+        AudioEngine.preloadEffect(file)
+        AudioEngine.playEffect(file)
+    end
+end
+
 return audio
 --[[
     AudioEngine.playMusic(MUSIC_FILE, true)

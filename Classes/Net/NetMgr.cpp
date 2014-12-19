@@ -142,19 +142,20 @@ void NetMgr::sendMessage(uint32_t len, uint8_t cmd, uint8_t action, char *msg)
 	uint32_t *ptime = (uint32_t*)poptionn;
 	*ptime++ = m_time++;
 
+	char *pmsg = (char*)ptime;
+	memcpy((void*)pmsg, msg, len);
+
 	uint32_t len4 = len / 4;
     for(uint32_t i = 0; i < len4; ++i)
     {
-        ((uint32_t*)msg)[i] ^= 0xFFFFFFFF - len + i;
+        ((uint32_t*)pmsg)[i] ^= 0xFFFFFFFF - len + i;
     }
 
     uint32_t len1 = len % 4;
     for(uint32_t i = 0; i < len1; ++i)
     {
-        msg[len4 * 4 + i] ^= 0xFFFFFFFF - len + i;
+        pmsg[len4 * 4 + i] ^= 0xFFFFFFFF - len + i;
     }
-
-	memcpy((void*)ptime, msg, len);
 
 #if 0
 	char *p = buf;
